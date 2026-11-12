@@ -177,3 +177,25 @@ from svgkit import Svg, Polygon
 - `references/text-font.md` — 文字、字体栈、中文
 - `references/pitfalls.md` — 两仓踩过的坑(数字格式、mask、手改回流、分辨率天花板等)
 - `references/fitting-with-reference.md` — 拿到参考位图时的拟合流程、`scripts/fit.py` 用法与验收口径
+
+## 自我演进(每次使用后)
+
+本技能是独立 git 仓库:`https://github.com/ToyosatomiminoMiko/miko_skill_svg`(分支 `main`)。
+每次用它完成一个任务后,花一分钟复盘,把这次学到的东西沉淀回技能仓,让它比上次更强:
+
+1. **复盘**:本次哪些步骤是临时摸索出来的?哪些坑下次还会踩?哪些几何/参数/验收口径值得写下来?
+2. **沉淀**:只把**可复用**的成果落盘(`scripts/` 与 `svgkit/` 底座、`references/` 补坑、
+   `SKILL.md` 补流程、`examples/` 加范例);某张图专用的常量、脚本与产物放那张图自己的项目目录
+   (见 SKILL.md“出图脚本放哪”),不要塞回技能仓。
+3. **自检**:`python3 examples/myanmar_flag/build.py` 后 `git status --porcelain assets/` 必须为空
+   (生成器是确定性的;若非空说明输出契约被破坏)。不通过先修,别把坏状态提交。
+4. **提交并推送**:`bash scripts/git_sync.sh "<feat|fix|docs|example>: 一句话"`。
+   工作区干净时脚本自动跳过;推送失败会保留本地提交并打印重试命令(代理
+   `127.0.0.1:7897` 未启动时脚本自动直连重试)。
+5. **边界**:不改变技能的对外契约(命令名、参数、产物格式、目录约定),除非本次任务明确要求;
+   一类改动一个提交,提交信息写清"为什么"。
+
+没有产生可复用改进就不提交:要自我迭代,但不要为提交而提交。
+
+> 注:`~/.dsh/skills/` 在 DSH 默认的 workspace-write 沙箱下是只读的;写不进去时向用户申请
+> 一次提权(或把改动内容交给用户执行),不要静默放弃。

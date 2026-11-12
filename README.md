@@ -18,7 +18,7 @@ DSH 技能:**几何优先**地用 Python(纯标准库)拼 SVG。矩形/圆/椭�
 技能目录固定为 `~/.dsh/skills/miko-skill-svg`(DSH 从这里发现技能):
 
 ```sh
-git clone <repo-url> ~/.dsh/skills/miko-skill-svg
+git clone https://github.com/ToyosatomiminoMiko/miko_skill_svg.git ~/.dsh/skills/miko-skill-svg
 ```
 
 项目级安装可放到 `<项目>/.dsh/skills/miko-skill-svg`。
