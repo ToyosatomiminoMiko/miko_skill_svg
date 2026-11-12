@@ -11,6 +11,7 @@ DSH 技能:**几何优先**地用 Python(纯标准库)拼 SVG。矩形/圆/椭�
 
 - `assets/flag.svg` — 800×532 范例成图(红底 + 白色党徽)
 - `assets/emblem.svg` — 透明底部件层(花环 / 齿轮 / 结 / 国土轮廓,各自成组)
+- `assets/ogas_logo.svg` — 960×720 OGAS 徽标(45° 等腰梯形,11 个 polygon,纯黑底)
 
 ## 安装
 
@@ -22,13 +23,16 @@ git clone <repo-url> ~/.dsh/skills/miko-skill-svg
 
 项目级安装可放到 `<项目>/.dsh/skills/miko-skill-svg`。
 
-依赖:Python 3.9+(在 3.15 上开发),纯标准库,无第三方包。
+依赖:Python 3.9+(在 3.15 上开发)。**生成 SVG 只用标准库**;只有 `scripts/fit.py`
+(位图参考的一轮拟合,不默认执行)需要 Pillow + numpy。
 
 ## 用法
 
 ```sh
 S=~/.dsh/skills/miko-skill-svg
 python3 "$S/examples/myanmar_flag/build.py"   # -> $S/assets/flag.svg + emblem.svg
+python3 "$S/examples/ogas_logo/build.py"      # -> $S/assets/ogas_logo.svg
+python3 "$S/scripts/fit.py" ref.png ref.json  # 有参考位图时:一轮拟合,只给顶点证据
 ```
 
 ```python
@@ -49,7 +53,9 @@ Svg(512, 512).add(
 
 ```
 scripts/svgkit/           # 构建底座: Svg / 图元 / 几何助手 / 确定性序列化
-examples/myanmar_flag/    # 完整范例: 参数 -> 四部件 -> 拼装整旗
+scripts/fit.py            # 位图 -> 色块轮廓顶点(一轮,不默认执行)
+examples/myanmar_flag/    # 范例 1: 参数 -> 四部件 -> 拼装整旗
+examples/ogas_logo/       # 范例 2: 位图参考 -> 45° 等腰梯形 chevron -> 徽标
 references/               # 几何配方、输出契约、文字、踩坑、拟合(仅有参考图时)
 assets/                   # 范例产物
 ```
@@ -58,7 +64,8 @@ assets/                   # 范例产物
 
 - **myama**(`__resources_wikipedia/myama`):MNTJP 党旗的位图拟合项目。其几何参数
   作为冻结输入迁入本技能范例;该仓库已冻结(README 有横幅),不再开发。
-  拟合/量测代码留在原仓库,不在本技能内维护。
+  拟合/量测代码留在原仓库,不在本技能内维护;本技能只保留**一轮**证据提取
+  (`scripts/fit.py`),不做渲染比对与迭代调参。
 - **miko_svg_editor**(`__projects_web/miko_svg_editor`):交互式 SVG 编辑器,仍是独立产品,
   本技能不接管它的代码;两者共享“几何优先 + 确定性输出”的设计取向,规范文档以本技能为准。
 
