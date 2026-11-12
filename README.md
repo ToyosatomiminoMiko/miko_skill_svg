@@ -55,7 +55,7 @@ scripts/svgkit/           # 构建底座: Svg / 图元 / 几何助手 / 确定�
 scripts/fit.py            # 位图 -> 色块轮廓顶点(一轮,不默认执行)
 examples/myanmar_flag/    # 内置范例: 参数 -> 四部件 -> 拼装整旗
 
-references/               # 几何配方、输出契约、文字、踩坑、拟合(仅有参考图时)
+references/               # 几何配方、输出契约、文字、踩坑、拟合(仅有参考图时)、观察记录
 assets/                   # 范例产物
 ```
 
