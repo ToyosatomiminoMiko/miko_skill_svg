@@ -67,18 +67,13 @@ miko-skill-svg/
 │   ├── wreath.py / gear.py / root.py / map.py   # 四个部件,各自输出局部坐标的图元
 │   ├── build.py               # 拼装并输出 assets/flag.svg、assets/emblem.svg
 │   └── README.md              # 来源、口径、与旧产物的差异
-├── examples/ogas_logo/        # 范例 2: 位图参考 → 45° 等腰梯形拼徽标(11 个 polygon)
-│   ├── constants.py           # 量出来的参数(唯一调参入口)
-│   ├── parts.py               # chevron(): 两根等腰梯形臂的通用生成器
-│   ├── build.py               # 拼装并输出 assets/ogas_logo.svg
-│   └── README.md              # 1 轮拟合的口径、参数表、已知偏差
 ├── references/
 │   ├── geometry-first.md      # 工作流 + 常见几何配方(齿轮/花环/放射阵列/45° 梯形)
 │   ├── contract.md            # 输出契约: 单位/确定性/属性/可编辑性
 │   ├── text-font.md           # 文字与字体
 │   ├── pitfalls.md            # 两仓踩过的坑
 │   └── fitting-with-reference.md  # 只有拿到参考位图时的拟合流程 + fit.py 用法
-└── assets/                    # 范例产物(flag.svg / emblem.svg / ogas_logo.svg)
+└── assets/                    # 范例产物(flag.svg / emblem.svg)
 ```
 
 ## svgkit 速查
@@ -146,23 +141,34 @@ python3 examples/myanmar_flag/build.py      # -> assets/flag.svg, assets/emblem.
 
 来源与口径见 `examples/myanmar_flag/README.md` 与 `references/contract.md`。
 
-## 范例 2: OGAS 徽标(位图参考 → 几何)
+## 出图脚本放哪(重要)
 
-`examples/ogas_logo/` 演示“手上只有一张参考位图”时的做法:4 个白色 chevron + 3 块彩色,
-全部是 **45° 等腰梯形**,共 11 个 `<polygon>`,纯黑底。
+技能里只放**可复用的底座**(`scripts/svgkit/`、`scripts/fit.py`)和一份内置范例
+(`examples/myanmar_flag/`)。**具体某张图的脚本与产物,放那张图自己的项目目录**,不要塞进技能:
 
-```sh
-python3 examples/ogas_logo/build.py            # -> assets/ogas_logo.svg
-python3 "$S/scripts/fit.py" ref.png out.json   # 需要时先跑一轮拟合拿顶点证据
+```
+<项目目录>/
+├── ref.png                 # 参考位图(有的话)
+├── out.svg                 # 产物
+└── <图名>/
+    ├── constants.py        # 量出来的参数(唯一调参入口)
+    ├── parts.py            # 这张图专用的几何(例如 45° 等腰梯形 chevron)
+    └── build.py            # 引技能底座, 拼装并写 ../out.svg
 ```
 
-要点(细节见 `examples/ogas_logo/README.md`):
+`build.py` / `parts.py` 开头引底座:
 
-- 每一块都是等腰梯形(底角 45°),用 `parts.chevron(apex, rot, leg, reach, gap)` 生成,
-  不要手写坐标;`leg` = 臂厚×√2(腰长),`reach` = 顶点到臂末端面的轴向距离;
-- 4 个外圈 chevron 是同一份几何绕中心旋转 90° 得到的,常量文件里只写一份;
-- `gap > 0` 时两根臂各自成块(留折缝),`gap == 0` 时合成一个 V 形(避免拼缝细线);
-- 位图只是**顶点证据**,不要照着位图自动描边;参数仍写进 `constants.py`。
+```python
+import os, sys
+from pathlib import Path
+SKILL_DIR = Path(os.environ.get("MIKO_SKILL_SVG", "~/.dsh/skills/miko-skill-svg")).expanduser()
+sys.path.insert(0, str(SKILL_DIR / "scripts"))
+from svgkit import Svg, Polygon
+```
+
+理由:底座是共享的、跟着技能升级;某张图的参数是项目资产,必须和图一起进版本库、一起改、
+一起回滚。图挪走时脚本跟着走,技能里不会留一堆只用过一次的常量。
+(范例: `__projects_python/img_gen/ogas/` 里的 OGAS 徽标脚本 —— 位图参考 → 45° 等腰梯形。)
 
 ## 参考
 

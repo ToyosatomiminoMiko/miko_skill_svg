@@ -4,14 +4,14 @@ DSH 技能:**几何优先**地用 Python(纯标准库)拼 SVG。矩形/圆/椭�
 就是对应元素,圆角矩形用 `<rect rx>`,真圆弧用 `<path>` 的 `A` 命令;只有贝塞尔和
 需要 `fill-rule` 挖洞的复合轮廓才用大段 path。输出确定性、可编辑、能直接进版本库。
 
-共享 svgkit 底座 + 一个完整范例(MNTJP 党旗重建)+ 契约/配方/踩坑文档。
-新图**照范例改**,不要从零手写坐标。
+共享 svgkit 底座 + 一个内置范例(MNTJP 党旗重建)+ 契约/配方/踩坑文档。
+新图**照范例改**,不要从零手写坐标。**具体某张图的脚本放那张图自己的项目目录**,
+技能里只放可复用的底座(见 `SKILL.md` 的“出图脚本放哪”)。
 
 ## 预览
 
 - `assets/flag.svg` — 800×532 范例成图(红底 + 白色党徽)
 - `assets/emblem.svg` — 透明底部件层(花环 / 齿轮 / 结 / 国土轮廓,各自成组)
-- `assets/ogas_logo.svg` — 960×720 OGAS 徽标(45° 等腰梯形,11 个 polygon,纯黑底)
 
 ## 安装
 
@@ -31,7 +31,6 @@ git clone <repo-url> ~/.dsh/skills/miko-skill-svg
 ```sh
 S=~/.dsh/skills/miko-skill-svg
 python3 "$S/examples/myanmar_flag/build.py"   # -> $S/assets/flag.svg + emblem.svg
-python3 "$S/examples/ogas_logo/build.py"      # -> $S/assets/ogas_logo.svg
 python3 "$S/scripts/fit.py" ref.png ref.json  # 有参考位图时:一轮拟合,只给顶点证据
 ```
 
@@ -54,8 +53,8 @@ Svg(512, 512).add(
 ```
 scripts/svgkit/           # 构建底座: Svg / 图元 / 几何助手 / 确定性序列化
 scripts/fit.py            # 位图 -> 色块轮廓顶点(一轮,不默认执行)
-examples/myanmar_flag/    # 范例 1: 参数 -> 四部件 -> 拼装整旗
-examples/ogas_logo/       # 范例 2: 位图参考 -> 45° 等腰梯形 chevron -> 徽标
+examples/myanmar_flag/    # 内置范例: 参数 -> 四部件 -> 拼装整旗
+
 references/               # 几何配方、输出契约、文字、踩坑、拟合(仅有参考图时)
 assets/                   # 范例产物
 ```

@@ -16,7 +16,7 @@
 | 开放折线 | 一串点,不闭合 | `<polyline>` |
 | 闭合多边形 | 一串点,首尾相连 | `<polygon>` |
 | 规则多边形 / 星形 | 顶点按固定角度均布 | `regular_polygon` / `regular_star` → `<polygon>` |
-| 45° 等腰梯形 / 箭头(chevron) | 底角 45°,两条腰一横一竖 | `<polygon>`,用`examples/ogas_logo/parts.py` 的 `chevron()` 生成 |
+| 45° 等腰梯形 / 箭头(chevron) | 底角 45°,两条腰一横一竖 | `<polygon>` + `chevron()` 配方(见下) |
 | 圆弧段 | 一段圆周 | `<path d="M... A...">` |
 | 透镜/叶片 | 两条同半径弧围成的尖头形 | `lens_path_d` → `<path>` |
 | 由若干简单形叠加成的复合形 | 同色图形叠起来 | 拆成多个图元,靠绘制顺序取并集 |
@@ -96,8 +96,8 @@ V4 = (side*reach,       reach)         末端面 × 外侧底
 (顶点 → 右外底 → 右末端面 → 右内底 → 左内底 → 左末端面),否则共边处会露出抗锯齿细线。
 
 一圈 4 个箭头 = **同一份几何绕中心每 90° 旋转**,常量里只写一份;对角朝向(西北等)
-用 `rot=-45`,此时两臂正好变成水平/竖直的 “Γ” 形。现成实现:
-`examples/ogas_logo/parts.py` 的 `chevron()`,范例见 `examples/ogas_logo/`。
+用 `rot=-45`,此时两臂正好变成水平/竖直的 “Γ” 形。参考实现:
+项目目录 `__projects_python/img_gen/ogas/parts.py` 的 `chevron()`(出图脚本不入技能)。
 
 ### 对称与阵列
 
