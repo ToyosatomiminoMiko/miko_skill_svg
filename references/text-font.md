@@ -17,6 +17,47 @@ Text(x, y, "缅甸民族真理与正义党",
   系统默认,度量全变;
 - 需要字距时用 `letter-spacing`,不要逐字摆 x。
 
+## 内嵌自定义字体子集(@font-face)
+
+`<text>` 最终用哪个字体的字形由查看端决定。要让成品在任何机器上都按设计字体渲染,
+就把**只含用到字形**的字体子集 base64 内嵌进 `<defs><style>`。口径与 miko_svg_editor
+的成品导出一致;底座在本技能 `scripts/font_embed.py`(`pip install fonttools`;
+拼 `@font-face` 与判断 sfnt 格式本身只用标准库):
+
+```python
+import sys
+sys.path.insert(0, "$S/scripts")
+from font_embed import font_face_style_lines, ink_center_offsets, subset_font
+
+# 1) 只裁用到的字形; 给 dest 时顺便落盘成项目资产(推荐: 出图不再依赖系统字体版本)
+font_bytes = subset_font("/usr/share/fonts/google-noto/NotoSans-Regular.ttf",
+                         "общегосударственная", dest="fonts/NotoSans-subset.ttf")
+# 2) 写成 <defs><style><![CDATA[ @font-face ... ]]> 的行, 拼到 <svg ...> 开标签之后
+lines = font_face_style_lines(
+    "Noto Sans", font_bytes, weight=400,
+    licence_note="/* Noto Sans Regular, SIL OFL 1.1; 许可原文见 LICENSE-NotoSans-OFL.txt */",
+)
+# 3) <text> 的 font-family 写内嵌族名, 后面照样留系统回退栈
+#    font-family="'Noto Sans', 'PT Sans', 'DejaVu Sans', sans-serif"
+```
+
+放置文字时 `text-anchor="middle"` 的锚点是 advance 中线, 不是墨迹中心。想按参考位图
+对位, 用 `ink_center_offsets()` 把偏差补掉(按 hmtx + glyf 算, 不计 kerning):
+
+```python
+dx, dy = ink_center_offsets(font, word, font_size)   # font 可以是路径或字节
+Text(cx + dx, cy + dy, word, text_anchor="middle",
+     transform=f"rotate({angle} {cx} {cy})")         # 绕墨迹中心旋转
+```
+
+- 只支持 sfnt(TrueType `glyf` 或 OpenType `CFF`);woff/woff2 是容器, 查看器不一定能解。
+- Chromium/WebKit 认 base64 `data:` 字体, **Inkscape 不认**(会回退本机同名字体);
+  所以内嵌族名沿用字体原族名, 本机装了同款字体时回退也几乎不变形, 目检用浏览器截图。
+- 许可: 内嵌子集也是“字体软件”, 分发成品时要附字体许可原文(OFL 要求), 并在注释里
+  写清来源;子集化默认保留 `name` 表里的版权/许可记录。
+- 改词之后要重裁子集, 否则新字形会静默回退到系统字体。
+- 一族字重一份 `@font-face`;`<text font-weight>` 要和声明的字重匹配。
+
 ## 为什么不做文字测量
 
 同一段文字在 VS Code 预览、Chrome、Inkscape 里的实际宽度可能不同(字体回退、字距、
@@ -31,8 +72,8 @@ OpenType 特性都不同)。在这里假装能算出宽度,只会让“看起来
 
 - **转曲**:把文字变成 `<path>`。只有用户明确要求“文字不可编辑/保证渲染一致”时才做,
   且要保留原始文字到 `<title>` 或注释里,方便以后改;
-- **字体子集化**:把用到的字形裁成小字体再嵌入 `@font-face`。这需要字体工具链,
-  不是本技能的内置能力;需要时按用户环境引入,并在文档里写清字体许可。
+- **字体子集化**:见上文「内嵌自定义字体子集」, 底座是 `scripts/font_embed.py`;
+  分发时按字体许可要求附上许可原文。
 
 ## 常见坑
 
@@ -42,3 +83,4 @@ OpenType 特性都不同)。在这里假装能算出宽度,只会让“看起来
 - `text-anchor` 在 Inkscape 里有时按“选中框”解释,和浏览器有细微差异,别把关键对齐
   只压在一行文字上;
 - 导出 PNG 时字体没装会变成方块或别的字体——要交付的是 SVG,提醒用户环境字体即可。
+- 内嵌了 `@font-face` 的 SVG 在 Inkscape 里看不到内嵌字体(它不解析 data URI), 会回退到本机同名字体;用浏览器验收。

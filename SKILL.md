@@ -62,6 +62,7 @@ miko-skill-svg/
 │   ├── geom.py                # 点列变换、圆弧、圆/多边形采样、正多边形/星形/透镜形
 │   └── serialize.py           # 确定性数字格式、XML 转义、属性顺序
 ├── scripts/fit.py             # 位图参考的一轮拟合(色块→轮廓→RDP→JSON), 不默认执行
+├── scripts/font_embed.py      # 字体子集 + 内嵌 @font-face + 墨迹居中修正(可选, 需 fontTools)
 ├── examples/myanmar_flag/     # 完整范例: 从冻结参数重绘整面旗
 │   ├── constants.py           # 全部数值参数(唯一调参入口)
 │   ├── wreath.py / gear.py / root.py / map.py   # 四个部件,各自输出局部坐标的图元
@@ -70,7 +71,7 @@ miko-skill-svg/
 ├── references/
 │   ├── geometry-first.md      # 工作流 + 常见几何配方(齿轮/花环/放射阵列/45° 梯形)
 │   ├── contract.md            # 输出契约: 单位/确定性/属性/可编辑性
-│   ├── text-font.md           # 文字与字体
+│   ├── text-font.md           # 文字与字体、内嵌自定义字体子集
 │   ├── pitfalls.md            # 两仓踩过的坑
 │   └── fitting-with-reference.md  # 只有拿到参考位图时的拟合流程 + fit.py 用法
 └── assets/                    # 范例产物(flag.svg / emblem.svg)
@@ -143,7 +144,7 @@ python3 examples/myanmar_flag/build.py      # -> assets/flag.svg, assets/emblem.
 
 ## 出图脚本放哪(重要)
 
-技能里只放**可复用的底座**(`scripts/svgkit/`、`scripts/fit.py`)和一份内置范例
+技能里只放**可复用的底座**(`scripts/svgkit/`、`scripts/fit.py`、`scripts/font_embed.py`)和一份内置范例
 (`examples/myanmar_flag/`)。**具体某张图的脚本与产物,放那张图自己的项目目录**,不要塞进技能:
 
 ```
@@ -174,7 +175,7 @@ from svgkit import Svg, Polygon
 
 - `references/geometry-first.md` — 几何拆解方法、齿轮/花环/放射阵列/轮廓配方
 - `references/contract.md` — 输出契约与可编辑性要求
-- `references/text-font.md` — 文字、字体栈、中文
+- `references/text-font.md` — 文字、字体栈、中文、内嵌自定义字体子集(`scripts/font_embed.py`)
 - `references/pitfalls.md` — 两仓踩过的坑(数字格式、mask、手改回流、分辨率天花板等)
 - `references/fitting-with-reference.md` — 拿到参考位图时的拟合流程、`scripts/fit.py` 用法与验收口径
 
