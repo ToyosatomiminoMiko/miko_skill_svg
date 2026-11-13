@@ -46,6 +46,7 @@ python3 "$S/examples/myanmar_flag/build.py"     # 完整范例: 800x532 党旗 -
 | 真圆弧 | `geom.arc_path_d` → `<path d="M... A...">` | 解析几何意义的圆弧,一条 A 命令 |
 | 透镜形(两头尖) | `geom.lens_path_d` → `<path>` | 两条劣弧闭合,半径由弦长/厚度反解 |
 | 贝塞尔曲线 / 复合轮廓 | `<path>`(必要时 `fill-rule="evenodd"`) | 只有到这一步才允许大量 path |
+| 渐变填充 | `<defs>` + `<radialGradient>` / `<linearGradient>` + `<stop>` | 用 `Defs` + `RadialGradient` / `LinearGradient` + `Stop`;图元写 `fill="url(#id)"` |
 | 文字 | `<text>` | 只保证合法与锚点,不做自动排版 |
 
 旋转/镜像/阵列优先用 `<g transform>` 或几何助手生成点列,**不要**手工重算坐标:
@@ -58,7 +59,7 @@ miko-skill-svg/
 ├── SKILL.md
 ├── scripts/svgkit/            # 纯标准库小库
 │   ├── doc.py                 # Svg: 根元素 / viewBox / save
-│   ├── shapes.py              # Rect/Circle/Ellipse/Line/Polyline/Polygon/Path/Text/Group
+│   ├── shapes.py              # Rect/Circle/Ellipse/Line/Polyline/Polygon/Path/Text/Group/Defs/渐变
 │   ├── geom.py                # 点列变换、圆弧、圆/多边形采样、正多边形/星形/透镜形
 │   └── serialize.py           # 确定性数字格式、XML 转义、属性顺序
 ├── scripts/fit.py             # 位图参考的一轮拟合(色块→轮廓→RDP→JSON), 不默认执行
@@ -81,7 +82,8 @@ miko-skill-svg/
 ## svgkit 速查
 
 ```python
-from svgkit import Svg, Group, Rect, Circle, Ellipse, Line, Polyline, Polygon, Path, Text
+from svgkit import Svg, Group, Defs, Rect, Circle, Ellipse, Line, Polyline, Polygon, Path, Text
+from svgkit import Stop, RadialGradient, LinearGradient
 from svgkit.geom import (
     arc_path_d, arc_points, angle_point, circle_points,
     lens_path_d, regular_polygon, regular_star,
@@ -100,6 +102,12 @@ poly = Polygon(points, fill="#fff")            # points: [(x, y), ...]
 path = Path(d, fill="none", stroke="#fff", stroke_width=17.461, stroke_linecap="round")
 text = Text(x, y, "文字", font_size=24, text_anchor="middle", fill="#fff")
 group = Group(*children, id="wreath", transform="translate(392.4,295.23) scale(0.232083)")
+
+# 渐变: 定义放 <defs>, 图元只写 url(#id); 画布级径向背景要 gradient_units="userSpaceOnUse"
+gradient = Defs(RadialGradient(Stop(0, "#484848"), Stop(1, "#050505"), id="bg",
+                               cx=400, cy=266, r=480, gradient_units="userSpaceOnUse"))
+background = Rect(0, 0, 800, 532, fill="url(#bg)")
+Svg(800, 532).add(gradient, background)        # 先定义, 后引用
 ```
 
 所有元素都接受公共样式参数:`id / transform / fill / fill-opacity / fill-rule / stroke /

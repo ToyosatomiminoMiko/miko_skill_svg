@@ -47,7 +47,12 @@
 - 同色图形叠在一起靠绘制顺序取并集;若出现异色描边接缝,检查是否该用同色重叠
   (`stroke-linecap="round"` 的圆头端点要埋进相邻图形);
 - 描边宽度单位是用户单位,缩放组里的描边会一起缩放;需要恒定线宽时把描边放在组外;
-- `fill-rule` 只在复合 path 挖洞时使用,默认 `nonzero`。
+- `fill-rule` 只在复合 path 挖洞时使用,默认 `nonzero`;
+- 渐变/图案用 paint server 表达:`<defs>` 里放 `<linearGradient>` / `<radialGradient>`
+  (内层 `<stop offset stop-color>`),图元只写 `fill="url(#id)"`;不要用滤镜或多层
+  半透明色模拟渐变 —— 前者跨渲染器差异大且不可编辑,后者改一处要改一批;
+- 画布级背景用 `gradientUnits="userSpaceOnUse"` 且 cx/cy/r 写成画布像素;局部图形的
+  渐变留默认 objectBoundingBox(0~1),随图形缩放。
 
 ## 文本
 

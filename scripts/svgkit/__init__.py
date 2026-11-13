@@ -4,7 +4,8 @@
 是什么:
     把"用简单几何图元拼 SVG"需要的东西收在一起:
     - doc.Svg            文档根(width/height/viewBox/save);
-    - shapes.*           Rect / Circle / Ellipse / Line / Polyline / Polygon / Path / Text / Group;
+    - shapes.*           Rect / Circle / Ellipse / Line / Polyline / Polygon / Path / Text /
+                         Group / Defs / RadialGradient / LinearGradient / Stop;
     - geom.*             点列变换(平移/旋转/镜像/缩放)、圆弧采样与 A 命令、正多边形/星形/透镜形配方;
     - serialize.*        确定性数字格式、XML 转义、属性拼装.
 
@@ -47,14 +48,18 @@ from .geom import (
 from .serialize import fmt
 from .shapes import (
     Circle,
+    Defs,
     Ellipse,
     Element,
     Group,
     Line,
+    LinearGradient,
     Path,
     Polygon,
     Polyline,
+    RadialGradient,
     Rect,
+    Stop,
     Text,
 )
 
@@ -62,6 +67,7 @@ __all__ = [
     "Svg",
     "Element",
     "Group",
+    "Defs",
     "Rect",
     "Circle",
     "Ellipse",
@@ -70,6 +76,9 @@ __all__ = [
     "Polygon",
     "Path",
     "Text",
+    "Stop",
+    "RadialGradient",
+    "LinearGradient",
     "fmt",
     "angle_point",
     "arc_path_d",

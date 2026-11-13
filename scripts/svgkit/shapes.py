@@ -3,7 +3,9 @@
 
 是什么:
     - Element: 所有元素的公共底座(id / transform / fill / stroke / opacity / mask ...);
-    - Group: <g> 容器, 可以嵌套;
+    - _Container: 带子元素的容器底座(子元素各占一行、缩进 2 空格);
+    - Group / Defs: <g> 分组容器 / <defs> 定义容器(渐变、字体等"被引用"的内容);
+    - 渐变: RadialGradient / LinearGradient 作容器装 Stop, 图元用 fill="url(#id)" 引用;
     - 几何元素: Rect / Circle / Ellipse / Line / Polyline / Polygon / Path / Text;
     - 每个元素在 render() 时输出一段文本, 子元素缩进 2 空格.
 
@@ -12,6 +14,8 @@
       里的手写坐标; 类名本身就是"这是什么形状"的声明, 后续改参数只动数值;
     - <path> 只留给真曲线(圆弧/贝塞尔): 直线多边形一律 <polygon>, 圆角矩形一律
       <rect rx ry>, 圆/椭圆一律 <circle> / <ellipse>;
+    - 渐变/图案是 paint server: 定义放 <defs>, 图元只写 fill="url(#id)"; 不用滤镜
+      模拟渐变(跨渲染器差异大、不可编辑);
     - 表现属性写成一等属性而不是 style="", Inkscape 和浏览器都能直接改;
     - 属性顺序固定: id -> 几何 -> transform -> 表现属性 -> 额外属性, 输出稳定可 diff;
     - 子元素缩进由 render(level) 传入, 不靠字符串替换, 嵌套层级清晰.
@@ -136,16 +140,23 @@ class Element:
         return self.render()
 
 
-class Group(Element):
-    """<g> 容器: 放一组子元素, 可以嵌套并带自己的 transform / 样式."""
+class _Container(Element):
+    """带子元素的容器底座: 子元素各占一行, 缩进 2 空格.
 
-    TAG = "g"
+    是什么:
+        Group / Defs / RadialGradient / LinearGradient 的共同实现 ——
+        开标签 + 子元素 + 闭标签.
+
+    为什么:
+        这四种容器的正文渲染规则完全一样(渐变的多个 <stop> 也是子元素), 抽一层
+        避免各写一遍; 新容器只要给个 TAG 就能用.
+    """
 
     def __init__(self, *children: Element, **style) -> None:
         super().__init__(**style)
         self.children: list[Element] = list(children)
 
-    def add(self, *children: Element) -> "Group":
+    def add(self, *children: Element) -> "_Container":
         """追加子元素, 返回自身以便链式调用."""
         self.children.extend(children)
         return self
@@ -158,6 +169,145 @@ class Group(Element):
         opening = f"{pad}<{self.TAG}{attrs_text(self._attributes())}>\n"
         body = "".join(child.render(level + 1) for child in self.children)
         return f"{opening}{body}{pad}</{self.TAG}>\n"
+
+
+class Group(_Container):
+    """<g> 容器: 放一组子元素, 可以嵌套并带自己的 transform / 样式."""
+
+    TAG = "g"
+
+
+class Defs(_Container):
+    """<defs>: 放"被引用而不直接绘制"的定义(渐变、图案、字体等).
+
+    为什么需要:
+        渐变/图案/字体定义放在 <defs> 里, 图元用 fill="url(#id)" 引用; 这样定义
+        只写一份, 多个图元共用, 打开后也能在 Inkscape 里直接改色标.
+    """
+
+    TAG = "defs"
+
+
+class Stop(Element):
+    """<stop>: 渐变上的一个色标; offset 0~1, 颜色加可选不透明度.
+
+    为什么单独成类:
+        stop 的属性是 offset / stop-color / stop-opacity, 与几何图元的 fill/stroke
+        不是一套; 写成 Element 子类比往 attrs 里塞字符串更好读、也保证数字格式.
+    """
+
+    TAG = "stop"
+
+    def __init__(
+        self,
+        offset: float,
+        color: str,
+        *,
+        opacity: float | None = None,
+        **style,
+    ) -> None:
+        super().__init__(**style)
+        self.offset = float(offset)
+        self.color = color
+        self.stop_opacity = opacity
+
+    def _geometry_attributes(self) -> list[tuple[str, str]]:
+        pairs: list[tuple[str, str]] = [
+            ("offset", fmt(self.offset)),
+            ("stop-color", self.color),
+        ]
+        if self.stop_opacity is not None:
+            pairs.append(("stop-opacity", _format_number(self.stop_opacity)))
+        return pairs
+
+
+class RadialGradient(_Container):
+    """<radialGradient>: 径向渐变, 子元素是 Stop(offset 必须递增).
+
+    坐标口径:
+        gradient_units 省略(objectBoundingBox)时 cx/cy/r 写 0~1 的相对值;
+        画布级背景用 gradient_units="userSpaceOnUse", 此时是画布用户单位(px).
+        只给一部分参数也可以, 其余用 SVG 默认值(50% / 50% / 50%).
+    """
+
+    TAG = "radialGradient"
+
+    def __init__(
+        self,
+        *stops: Stop,
+        cx: float | str | None = None,
+        cy: float | str | None = None,
+        r: float | str | None = None,
+        fx: float | str | None = None,
+        fy: float | str | None = None,
+        gradient_units: str | None = None,
+        spread_method: str | None = None,
+        **style,
+    ) -> None:
+        super().__init__(*stops, **style)
+        self.cx, self.cy, self.r = cx, cy, r
+        self.fx, self.fy = fx, fy
+        self.gradient_units = gradient_units
+        self.spread_method = spread_method
+
+    def _geometry_attributes(self) -> list[tuple[str, str]]:
+        pairs: list[tuple[str, str]] = []
+        for name, value in (
+            ("cx", self.cx),
+            ("cy", self.cy),
+            ("r", self.r),
+            ("fx", self.fx),
+            ("fy", self.fy),
+        ):
+            if value is not None:
+                pairs.append((name, _format_number(value)))
+        for name, value in (
+            ("gradientUnits", self.gradient_units),
+            ("spreadMethod", self.spread_method),
+        ):
+            if value is not None:
+                pairs.append((name, str(value)))
+        return pairs
+
+
+class LinearGradient(_Container):
+    """<linearGradient>: 线性渐变, 子元素是 Stop(offset 必须递增)."""
+
+    TAG = "linearGradient"
+
+    def __init__(
+        self,
+        *stops: Stop,
+        x1: float | str | None = None,
+        y1: float | str | None = None,
+        x2: float | str | None = None,
+        y2: float | str | None = None,
+        gradient_units: str | None = None,
+        spread_method: str | None = None,
+        **style,
+    ) -> None:
+        super().__init__(*stops, **style)
+        self.x1, self.y1, self.x2, self.y2 = x1, y1, x2, y2
+        self.gradient_units = gradient_units
+        self.spread_method = spread_method
+
+    def _geometry_attributes(self) -> list[tuple[str, str]]:
+        pairs: list[tuple[str, str]] = []
+        for name, value in (
+            ("x1", self.x1),
+            ("y1", self.y1),
+            ("x2", self.x2),
+            ("y2", self.y2),
+        ):
+            if value is not None:
+                pairs.append((name, _format_number(value)))
+        for name, value in (
+            ("gradientUnits", self.gradient_units),
+            ("spreadMethod", self.spread_method),
+        ):
+            if value is not None:
+                pairs.append((name, str(value)))
+        return pairs
 
 
 class Rect(Element):
